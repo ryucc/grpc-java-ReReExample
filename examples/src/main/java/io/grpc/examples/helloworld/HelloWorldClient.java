@@ -25,6 +25,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import org.rere.api.ReRe;
+import org.rere.external.grpc.ReReGrpc;
+
 /**
  * A simple client that requests a greeting from the {@link HelloWorldServer}.
  */
@@ -88,8 +91,20 @@ public class HelloWorldClient {
     ManagedChannel channel = Grpc.newChannelBuilder(target, InsecureChannelCredentials.create())
         .build();
     try {
-      HelloWorldClient client = new HelloWorldClient(channel);
+      ReRe reRe = new ReRe(ReReGrpc.defaultSettings());
+      Channel rereChannel = reRe.createSpiedObject(channel, Channel.class);
+      // Replace original channel with rereChannel
+      // HelloWorldClient client = new HelloWorldClient(channel);
+      HelloWorldClient client = new HelloWorldClient(rereChannel);
+
+	  /* Use mock channel */
+	  // Channel mockChannel = HelloWorldClientMock.create();
+      // HelloWorldClient client = new HelloWorldClient(mockChannel);
       client.greet(user);
+
+	  System.out.println(reRe.exportMockito("io.grpc.examples.helloworld",
+                 "create",
+                 "HelloWorldClientMock"));
     } finally {
       // ManagedChannels use resources like threads and TCP connections. To prevent leaking these
       // resources the channel should be shut down when it will no longer be used. If it may be used
